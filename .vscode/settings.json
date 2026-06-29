@@ -1,0 +1,14 @@
+{
+    "python.defaultInterpreterPath": "/Users/vineeth/work/conda_env/envs/workspace-manager/bin/python",
+    "terminal.integrated.env.osx": {
+        "PATH": "/Users/vineeth/work/conda_env/bin:${env:PATH}"
+    },
+    "python.terminal.activateEnvironment": false,
+    "terminal.integrated.profiles.osx": {
+        "zsh (Conda)": {
+            "path": "zsh",
+            "args": ["-c", "source /Users/vineeth/work/conda_env/bin/activate workspace-manager; exec zsh"]
+        }
+    },
+    "terminal.integrated.defaultProfile.osx": "zsh (Conda)"
+}
