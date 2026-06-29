@@ -1,0 +1,13 @@
+# ==============================================================================
+# Workspace Manager - User Configuration Template
+# Copy this file to ~/.workspace.conf and adjust the values for your machine.
+# ==============================================================================
+
+export WS_HOME="$HOME/work"
+export WS_PROJECTS="$WS_HOME/projects"
+export WS_CONDA_BASE="$WS_HOME/conda_env"
+export WS_GIT_USER="Your Name"
+export WS_GIT_EMAIL="your.email@example.com"
+export WS_SSH_KEY="$WS_HOME/.ssh/github_key"
+export WS_BACKUP_MOUNT="/Volumes/work"
+export WS_LOG_DIR="$WS_HOME/logs"
