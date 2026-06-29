@@ -23,28 +23,16 @@ This package is built natively for macOS and Unix environments running Zsh.
 
 ## Installation
 
-**1. Clone the repository into your desired projects directory:**
-```zsh
-git clone git@github.com:vineethktalasila/workspace-manager.git ~/work/projects/workspace-manager
-```
+Run the following command in your terminal to automatically install and configure Workspace Manager:
 
-**2. Set up your local configuration:**
-Copy the template configuration file to your home directory:
-```zsh
-cp ~/work/projects/workspace-manager/workspace.conf.template ~/.workspace.conf
-```
-Open `~/.workspace.conf` and update the environment variables with your specific system paths and Git identity.
+~~~zsh
+curl -fsSL https://raw.githubusercontent.com/vineethktalasila/workspace-manager/main/install.sh | zsh
+~~~
 
-**3. Load the plugin into your shell:**
-Open your `~/.zshrc` file and append the following line at the bottom:
-```zsh
-source ~/work/projects/workspace-manager/workspace.plugin.zsh
-```
-
-**4. Reload your terminal:**
-```zsh
-source ~/.zshrc
-```
+**Post-Installation:**
+1. Open `~/.workspace.conf` and update the environment variables with your specific Git identity and system paths.
+2. Restart your terminal or run `source ~/.zshrc`.
+3. Type `work --help` to view available commands.
 
 ---
 
@@ -52,7 +40,7 @@ source ~/.zshrc
 
 The system relies on a hidden configuration file to decouple the logic from hardcoded machine paths. 
 
-```bash
+~~~bash
 # Core directories
 export WS_HOME="$HOME/work"
 export WS_PROJECTS="$WS_HOME/projects"
@@ -70,7 +58,7 @@ export WS_SSH_KEY="$WS_HOME/.ssh/github_key"
 # Hardware/Storage Parameters
 export WS_BACKUP_MOUNT="/Volumes/work"
 export WS_LOG_DIR="$WS_HOME/logs"
-```
+~~~
 
 ---
 
@@ -88,7 +76,7 @@ Architects a new project directory, provisions a Conda environment, establishes 
 * `--clone <url>` : Bypass standard scaffolding to securely clone an existing remote repository into your workspace.
 
 **Examples:**
-```zsh
+~~~zsh
 # Scaffold a standard directory for a new theoretical model
 work new ksw_criterion_model
 
@@ -97,53 +85,53 @@ work new --flat --publish grey_galaxies_sim
 
 # Securely clone a colleague's repository into your managed workspace
 work new --clone git@github.com:username/qft-analysis.git
-```
+~~~
 
 ### `work start` (Activation)
 Activates a given workspace. It automatically hooks the designated Conda environment, navigates to the directory, and safely executes an inbound Git sync from the remote origin (and upstream, if applicable).
 
-```zsh
+~~~zsh
 # Activate a specific workspace directly
 work start grey_galaxies_sim
 
 # Or run without arguments to launch an interactive selection menu
 work start
-```
+~~~
 
 ### `work change` (Transitioning)
 A safe transition hook. It executes a full `work stop` teardown on your currently active environment before bootstrapping the new one. 
 
-```zsh
+~~~zsh
 work change supersym_blackholes
-```
+~~~
 
 ### `work stop` (Teardown & Outbound Sync)
 Safely detaches from the current workspace. It exports your Conda blueprint to `environment.yml`, commits any unstaged work with an automated timestamp, pushes to your remote origin, deactivates the Conda environment, and returns you to `~/`.
 
-```zsh
+~~~zsh
 work stop
-```
+~~~
 
 ### `work delete` (Destructive Purge)
 Mathematically purges a project from your workspace. It deletes the local APFS directory, permanently unlinks and destroys the Conda environment, and utilizes the GitHub API to delete the remote repository. *Requires strict user confirmation.*
 
-```zsh
+~~~zsh
 work delete obsolete_data_model
-```
+~~~
 
 ### `work list`
 Displays a clean list of all currently managed project directories inside your configured `$WS_PROJECTS` path.
 
-```zsh
+~~~zsh
 work list
-```
+~~~
 
 ---
 
 ## Standard Directory Architecture
 Unless bypassed with the `--flat` flag, `work new` generates the following deterministic structure optimized for Python workflows:
 
-```text
+~~~text
 project_name/
 ├── .vscode/               # Auto-configured Conda/Zsh IDE settings
 ├── data/
@@ -155,4 +143,4 @@ project_name/
 ├── tests/                 # Unit testing
 ├── .gitignore             # Opinionated data-science exclusions
 └── README.md              
-```
+~~~
