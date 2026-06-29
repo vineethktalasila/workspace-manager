@@ -17,22 +17,26 @@ shift # Shift arguments so $1 becomes the first option after the subcommand
 # 2. Route Subcommands
 case "$SUBCOMMAND" in
     new)
-        # Execute the scaffolding engine and pass along all remaining arguments
         exec "$WS_PROJECTS/workspace-manager/bin/create_project.sh" "$@"
         ;;
-    start|stop|change|delete|list|backup)
-        echo "Subcommand '$SUBCOMMAND' is recognized and will be implemented in Step 3."
+    delete)
+        exec "$WS_PROJECTS/workspace-manager/bin/delete_project.sh" "$@"
         ;;
-    -h|--help|*)
-        echo "Usage: work <command> [options]"
-        echo ""
-        echo "Commands:"
-        echo "  new      Scaffold a new project environment"
-        echo "  start    Activate a project workspace"
-        echo "  stop     Teardown and sync the active workspace"
-        echo "  change   Switch to a different project workspace"
-        echo "  delete   Purge a workspace locally and remotely"
-        echo "  list     List all available workspace projects"
-        echo "  backup   Sync workspace environments and codebases to external storage"
+    list)
+        echo "=== Available Projects ==="
+        if [[ -d "$WS_PROJECTS" ]]; then
+            # Use Zsh array expansion to cleanly list directories
+            local projects=("$WS_PROJECTS"/*(/N:t))
+            if (( ${#projects[@]} == 0 )); then
+                echo " (No projects found)"
+            else
+                printf '  - %s\n' "${projects[@]}"
+            fi
+        fi
+        echo "=========================="
         ;;
+    start|stop|change|backup)
+        echo "Subcommand '$SUBCOMMAND' is recognized and will be fully integrated soon."
+        ;;
+
 esac
