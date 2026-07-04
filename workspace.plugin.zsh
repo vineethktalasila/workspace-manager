@@ -32,11 +32,33 @@ work() {
 }
 
 # Workspace Autocomplete
-_work_project_completions() {
-    if [[ -d "$WS_PROJECTS" ]]; then
-        local projects=("$WS_PROJECTS"/*(/N:t))
-        compadd -a projects
+_work() {
+    local -a subcommands
+    subcommands=(
+        'start:Start a workspace project'
+        'stop:Stop the current workspace project'
+        'change:Switch to a different workspace project'
+        'delete:Delete a workspace project'
+        'new:Create a new workspace project'
+        'list:List available workspace projects'
+    )
+
+    # First positional argument: the subcommand itself
+    if (( CURRENT == 2 )); then
+        _describe -t commands 'work subcommand' subcommands
+        return
     fi
+
+    # Only offer project name completion for these subcommands
+    case "${words[2]}" in
+        start|change|stop|delete)
+            if [[ -d "$WS_PROJECTS" ]]; then
+                local -a projects
+                projects=("$WS_PROJECTS"/*(/N:t))
+                compadd -a projects
+            fi
+            ;;
+    esac
 }
 
-compdef _work_project_completions work
+compdef _work work
