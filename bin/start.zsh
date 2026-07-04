@@ -1,7 +1,25 @@
-# ==============================================================================
-# Workspace Manager: Environment Activation & Inbound Sync
-# Note: This file must be sourced, not executed.
-# ==============================================================================
+# ------------------------------------------------------------------------------
+# Script: start.zsh
+# Description:
+#   Activates a selected workspace by optionally prompting for project choice,
+#   activating its matching Conda environment, changing to the project
+#   directory, and synchronizing Git state from origin (and upstream if present).
+#   This script is intended to be sourced from workspace.plugin.zsh.
+#
+# Global Variables Required:
+#   WS_PROJECTS   - Base directory containing managed project folders.
+#   WS_CONDA_BASE - Conda base path used to discover matching environments.
+#   WS_SSH_KEY    - Optional SSH private key path for Git fetch/pull operations.
+#
+# Arguments:
+#   $1 - Optional workspace/project name to activate.
+#
+# Side Effects:
+#   - Changes current shell directory (cd) to the selected project.
+#   - Activates Conda environment in the current shell (if conda exists).
+#   - Performs network Git operations (fetch, pull --rebase, optional merge).
+#   - May write merge commits when upstream auto-merge succeeds.
+# ------------------------------------------------------------------------------
 
 REQUESTED_ENV=$1
 SELECTED_ENV=""

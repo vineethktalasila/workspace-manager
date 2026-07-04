@@ -1,7 +1,26 @@
-# ==============================================================================
-# Workspace Manager: Environment Teardown & Outbound Sync
-# Note: This file must be sourced, not executed.
-# ==============================================================================
+# ------------------------------------------------------------------------------
+# Script: stop.zsh
+# Description:
+#   Performs workspace teardown and backup sync by scanning managed repositories,
+#   exporting Conda environment specs, auto-committing/pushing pending changes,
+#   deactivating active Conda shells, and returning to the user's home
+#   directory. This script is intended to be sourced from workspace.plugin.zsh.
+#
+# Global Variables Required:
+#   WS_PROJECTS   - Base directory containing managed project folders.
+#   WS_CONDA_BASE - Conda base path used to export per-project environments.
+#   WS_SSH_KEY    - Optional SSH private key path for Git push operations.
+#
+# Arguments:
+#   None.
+#
+# Side Effects:
+#   - Writes/overwrites environment.yml files in managed repositories.
+#   - Creates Git commits for dirty repositories.
+#   - Pushes commits to remote origin (network side effect).
+#   - Deactivates Conda environments in the current shell session.
+#   - Changes current shell directory to $HOME.
+# ------------------------------------------------------------------------------
 
 echo "=== Initiating Workspace Teardown ==="
 TIMESTAMP=$(date "+%Y-%m-%d %H:%M:%S")

@@ -1,146 +1,192 @@
 # Workspace Manager
 
-An opinionated, deterministic workspace orchestrator for Zsh. 
+## Overview
+Workspace Manager is a Zsh-first project workflow wrapper exposed through a single `work` command.
 
-Workspace Manager automates the friction out of complex research and computational workflows. It seamlessly bridges Conda environment provisioning, standardized directory scaffolding, isolated Git/SSH routing, and automated GitHub backups into a single, elegant `work` command.
+It combines:
+- Project creation and cloning
+- Per-project Git identity and SSH key routing
+- Optional Conda environment provisioning
+- Workspace activation/deactivation helpers
+- Project listing and destructive teardown
 
-## Features
-* **Deterministic Scaffolding:** Instantly generate standardized data science and research directory topologies (`src/`, `data/`, `models/`, `notebooks/`) with customized `.gitignore` files.
-* **Isolated Environment Provisioning:** Automatically clone and bind dedicated Conda environments to your projects, complete with auto-generated `.vscode/settings.json` integrations.
-* **Hermetic Git Routing:** Dynamically inject local `user.name`, `user.email`, and distinct SSH keys into individual projects, keeping your professional repositories completely isolated from global system configs.
-* **Automated Sync & Teardown:** Safely detach from a workspace. The `work stop` command automatically catches uncommitted changes, snapshots your Conda environment to an `environment.yml` blueprint, and synchronizes your work with a remote GitHub origin.
-* **API Integration:** Publish private or public repositories directly to GitHub using the `gh` CLI during project creation.
-
----
-
-## Prerequisites
-This package is built natively for macOS and Unix environments running Zsh.
-* **Zsh** (Default shell on macOS)
-* **Conda** (Anaconda, Miniconda, or Miniforge)
-* **Git** * **GitHub CLI** (`gh`) - *Required for remote publishing*
-
----
+The CLI routing behavior is split across:
+- `bin/work`: core router for subcommands
+- `workspace.plugin.zsh`: shell function wrapper that intercepts `start`, `stop`, and `change`
 
 ## Installation
-
-Run the following command in your terminal to automatically install and configure Workspace Manager:
-
-~~~zsh
+```zsh
 curl -fsSL https://raw.githubusercontent.com/vineethktalasila/workspace-manager/main/install.sh | zsh
-~~~
+```
 
-**Post-Installation:**
-1. Open `~/.workspace.conf` and update the environment variables with your specific Git identity and system paths.
-2. Restart your terminal or run `source ~/.zshrc`.
-3. Type `work --help` to view available commands.
+What `install.sh` does:
+1. Ensures `git` is available.
+2. Clones or updates this repo at `$HOME/work/projects/workspace-manager`.
+3. Copies `workspace.conf.template` to `~/.workspace.conf` if it does not exist.
+4. Appends `source $HOME/work/projects/workspace-manager/workspace.plugin.zsh` to `~/.zshrc`.
 
----
+After install:
+1. Edit `~/.workspace.conf`.
+2. Reload shell (`source ~/.zshrc`) or restart terminal.
 
-## Configuration (`~/.workspace.conf`)
+## Configuration
+Configuration is loaded from `~/.workspace.conf`.
 
-The system relies on a hidden configuration file to decouple the logic from hardcoded machine paths. 
+Template schema:
 
-~~~bash
-# Core directories
+```bash
 export WS_HOME="$HOME/work"
 export WS_PROJECTS="$WS_HOME/projects"
-
-# Environment management
 export WS_CONDA_BASE="$WS_HOME/conda_env"
-
-# Git Identity (leave blank to use system defaults)
 export WS_GIT_USER="Your Name"
 export WS_GIT_EMAIL="your.email@example.com"
-
-# Isolated SSH Tunneling (Optional)
 export WS_SSH_KEY="$WS_HOME/.ssh/github_key"
-
-# Hardware/Storage Parameters
 export WS_BACKUP_MOUNT="/Volumes/work"
 export WS_LOG_DIR="$WS_HOME/logs"
-~~~
+```
 
----
+Variable reference:
+- `WS_HOME`: Root workspace directory.
+- `WS_PROJECTS`: Parent directory containing all managed project folders.
+- `WS_CONDA_BASE`: Base directory where Conda environments are expected (`$WS_CONDA_BASE/envs/<project>`).
+- `WS_GIT_USER`: Per-project Git `user.name` applied during project creation/clone.
+- `WS_GIT_EMAIL`: Per-project Git `user.email` applied during project creation/clone.
+- `WS_SSH_KEY`: Optional SSH key path used for Git operations (`GIT_SSH_COMMAND` and local `core.sshCommand`).
+- `WS_BACKUP_MOUNT`: Reserved in template; currently not consumed by the core router.
+- `WS_LOG_DIR`: Reserved in template; currently not consumed by the core router.
+
+Important path note:
+- `install.sh` installs to `$HOME/work/projects/workspace-manager`.
+- `workspace.plugin.zsh` and `bin/work` resolve helper scripts via `$WS_PROJECTS/workspace-manager/...`.
+- Keep `WS_PROJECTS` aligned with install location, or commands may resolve to the wrong path.
 
 ## Command Reference
+The main command is:
 
-The toolkit is accessed entirely through the `work` command. 
+```zsh
+work <subcommand> [options]
+```
 
-### `work new` (Project Scaffolding)
-Architects a new project directory, provisions a Conda environment, establishes local Git configs, and creates IDE bindings.
+Subcommands defined in `bin/work`:
 
-**Options:**
-* `--flat` : Bypass standard sub-directory generation (`data/`, `models/`, etc.) for a simpler layout.
-* `--publish` : Automatically create a remote repository via GitHub API and push the initial commit.
-* `--public` : Make the published repository public (defaults to private).
-* `--clone <url>` : Bypass standard scaffolding to securely clone an existing remote repository into your workspace.
+### `work new`
+Routes to `bin/create_project.sh`.
 
-**Examples:**
-~~~zsh
-# Scaffold a standard directory for a new theoretical model
-work new ksw_criterion_model
+Usage examples:
 
-# Scaffold a flat topology and auto-publish privately to GitHub
-work new --flat --publish grey_galaxies_sim
+```zsh
+# Standard scaffold
+work new my_project
 
-# Securely clone a colleague's repository into your managed workspace
-work new --clone git@github.com:username/qft-analysis.git
-~~~
+# Flat scaffold (skip data/raw, data/processed, notebooks, src, models, tests)
+work new --flat my_project
 
-### `work start` (Activation)
-Activates a given workspace. It automatically hooks the designated Conda environment, navigates to the directory, and safely executes an inbound Git sync from the remote origin (and upstream, if applicable).
+# Scaffold and publish to GitHub as private repo (requires gh)
+work new --publish my_project
 
-~~~zsh
-# Activate a specific workspace directly
-work start grey_galaxies_sim
+# Scaffold and publish as public repo
+work new --publish --public my_project
 
-# Or run without arguments to launch an interactive selection menu
-work start
-~~~
+# Clone mode (name + remote URL)
+work new --clone my_project git@github.com:owner/repo.git
+```
 
-### `work change` (Transitioning)
-A safe transition hook. It executes a full `work stop` teardown on your currently active environment before bootstrapping the new one. 
+Behavior details:
+- Creates project at `$WS_PROJECTS/<project_name>`.
+- If `conda` is available, clones `base` into a new environment named after the project.
+- Generates `.gitignore`, `.vscode/settings.json`, and project `README.md`.
+- Initializes Git and performs initial commit.
+- Applies local Git identity and SSH configuration using `WS_GIT_USER`, `WS_GIT_EMAIL`, `WS_SSH_KEY`.
 
-~~~zsh
-work change supersym_blackholes
-~~~
+### `work delete`
+Routes to `bin/delete_project.sh`.
 
-### `work stop` (Teardown & Outbound Sync)
-Safely detaches from the current workspace. It exports your Conda blueprint to `environment.yml`, commits any unstaged work with an automated timestamp, pushes to your remote origin, deactivates the Conda environment, and returns you to `~/`.
+Usage example:
 
-~~~zsh
-work stop
-~~~
+```zsh
+work delete my_project
+```
 
-### `work delete` (Destructive Purge)
-Mathematically purges a project from your workspace. It deletes the local APFS directory, permanently unlinks and destroys the Conda environment, and utilizes the GitHub API to delete the remote repository. *Requires strict user confirmation.*
-
-~~~zsh
-work delete obsolete_data_model
-~~~
+Behavior details:
+- Requires exact confirmation by typing project name.
+- Removes local directory at `$WS_PROJECTS/<project_name>`.
+- Removes Conda environment `<project_name>` when Conda is available.
+- If `gh` is installed, attempts to delete remote repo using `gh repo delete <project_name> --yes`.
 
 ### `work list`
-Displays a clean list of all currently managed project directories inside your configured `$WS_PROJECTS` path.
+Implemented directly inside `bin/work`.
 
-~~~zsh
+Usage example:
+
+```zsh
 work list
-~~~
+```
 
----
+Behavior details:
+- Prints directories found under `$WS_PROJECTS`.
 
-## Standard Directory Architecture
-Unless bypassed with the `--flat` flag, `work new` generates the following deterministic structure optimized for Python workflows:
+### `work start`
+Recognized by `bin/work`, but practically handled by `workspace.plugin.zsh` by sourcing `bin/start.zsh`.
 
-~~~text
-project_name/
-├── .vscode/               # Auto-configured Conda/Zsh IDE settings
-├── data/
-│   ├── processed/         # Cleaned, finalized data sets
-│   └── raw/               # Immutable raw data
-├── models/                # Trained models, neural network weights, etc.
-├── notebooks/             # Jupyter/Mathematica scratchpads
-├── src/                   # Core executable source code
-├── tests/                 # Unit testing
-├── .gitignore             # Opinionated data-science exclusions
-└── README.md              
-~~~
+Usage examples:
+
+```zsh
+# Activate specific workspace
+work start my_project
+
+# Interactive selection (lists projects with matching Conda envs)
+work start
+```
+
+Behavior details (`bin/start.zsh`):
+- Selects workspace (argument or interactive menu).
+- Activates Conda environment with same name (if Conda exists).
+- `cd` into project directory.
+- Pulls from `origin` on active branch and optionally merges `upstream/<branch>`.
+
+### `work stop`
+Recognized by `bin/work`, but practically handled by `workspace.plugin.zsh` by sourcing `bin/stop.zsh`.
+
+Usage example:
+
+```zsh
+work stop
+```
+
+Behavior details (`bin/stop.zsh`):
+- Iterates repos under `$WS_PROJECTS`.
+- Exports Conda environment to each repo's `environment.yml` when possible.
+- Auto-commits and pushes dirty repos with an automated teardown commit message.
+- Deactivates active Conda shells and returns to home directory.
+
+### `work change`
+Recognized by `bin/work`, but practically handled by `workspace.plugin.zsh`.
+
+Usage example:
+
+```zsh
+work change my_project
+```
+
+Behavior details:
+- Prints transition banner.
+- Sources `bin/stop.zsh` then `bin/start.zsh <target>`.
+
+### `work backup`
+Recognized in `bin/work` but currently not implemented.
+
+Usage example:
+
+```zsh
+work backup
+```
+
+Current output:
+
+```text
+Subcommand 'backup' is recognized and will be fully integrated soon.
+```
+
+## Notes
+- `work --help` is not currently implemented in `bin/work`.
+- `start`, `stop`, and `change` rely on the shell plugin wrapper, not only the router binary.

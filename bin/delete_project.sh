@@ -1,7 +1,23 @@
 #!/bin/zsh
-# ==============================================================================
-# Workspace Manager: Project Teardown Engine
-# ==============================================================================
+# ------------------------------------------------------------------------------
+# Script: delete_project.sh
+# Description:
+#   Permanently deletes a managed project after explicit confirmation. Teardown
+#   includes local project directory removal, Conda environment removal, and an
+#   optional GitHub remote repository deletion via gh CLI.
+#
+# Global Variables Required:
+#   WS_PROJECTS   - Base directory containing managed project folders.
+#   WS_CONDA_BASE - Conda base path used for environment cleanup checks.
+#
+# Arguments:
+#   $1 - Project name to delete.
+#
+# Side Effects:
+#   - Calls GitHub API through gh CLI to delete remote repository (if available).
+#   - Removes Conda environment <project_name> (if conda exists).
+#   - Deletes local directory $WS_PROJECTS/<project_name> via rm -rf.
+# ------------------------------------------------------------------------------
 set -eo pipefail
 
 PROJECT_NAME=$1

@@ -1,7 +1,32 @@
 #!/bin/zsh
-# ==============================================================================
-# Workspace Manager: Project Scaffolding Engine
-# ==============================================================================
+# ------------------------------------------------------------------------------
+# Script: create_project.sh
+# Description:
+#   Creates a managed workspace project by either scaffolding a new repository
+#   or cloning an existing remote repository, then applying local Git identity
+#   and optional SSH routing. For scaffolded projects, it can provision a Conda
+#   environment, generate project structure/files, and optionally publish to
+#   GitHub via gh CLI.
+#
+# Global Variables Required:
+#   WS_PROJECTS   - Base directory where project folders are created.
+#   WS_CONDA_BASE - Conda base path used in generated VS Code interpreter config.
+#   WS_GIT_USER   - Optional local Git user.name to apply per repository.
+#   WS_GIT_EMAIL  - Optional local Git user.email to apply per repository.
+#   WS_SSH_KEY    - Optional SSH private key path for Git operations.
+#
+# Arguments:
+#   Positional/flags parsed by this script:
+#     work new [--flat] [--publish] [--public] <project_name> [remote_url]
+#     work new --clone <project_name> <remote_url>
+#
+# Side Effects:
+#   - Creates directories/files under $WS_PROJECTS/<project_name>.
+#   - Initializes and commits a Git repository.
+#   - Writes local Git config (user identity and core.sshCommand).
+#   - Creates Conda environment <project_name> by cloning base (if conda exists).
+#   - Calls GitHub API through gh CLI to create/push remote repos (optional).
+# ------------------------------------------------------------------------------
 set -eo pipefail # Fail fast on errors
 
 FLAT_MODE=0
