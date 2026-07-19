@@ -5,15 +5,16 @@ Workspace Manager is a Zsh-first project workflow wrapper exposed through a sing
 
 It combines:
 - Project creation, cloning, and upstream forking
-- Context-aware Zsh autocomplete for projects and subcommands
+- Context-aware terminal autocomplete for projects and subcommands
 - Per-project Git identity and SSH key routing
 - Optional Conda environment provisioning
 - Session-scoped workspace activation and teardown
 - Project listing and destructive cleanup
+- Native cross-platform support for macOS (Zsh) and Linux (Bash)
 
 The CLI routing behavior is decoupled across:
 - `bin/work`: Core router for executing heavy subcommands in isolated sub-shells.
-- `workspace.plugin.zsh`: Shell function wrapper sourced directly into memory to handle state-mutating commands (`start`, `stop`, `change`) and Zsh `compdef` autocomplete.
+- `workspace.plugin.*`: Shell function wrappers sourced directly into memory to handle state-mutating commands (`start`, `stop`, `change`) and autocomplete engines.
 
 ## Installation
 
@@ -22,14 +23,14 @@ curl -fsSL [https://raw.githubusercontent.com/vineethktalasila/workspace-manager
 ```
 
 What `install.sh` does:
-1. Ensures `git` is available.
+1. Ensures `git` is available and `zsh` is installed on the system.
 2. Clones or updates this repository into a hidden system directory: `$HOME/.workspace-manager`.
 3. Copies `workspace.conf.template` to `~/.workspace.conf` (if it does not exist) and securely injects the `$WS_CORE_DIR` system path.
-4. Appends `source $HOME/.workspace-manager/workspace.plugin.zsh` to `~/.zshrc`.
+4. Auto-detects your active shell (Zsh vs. Bash) and appends the appropriate `workspace.plugin` to your `~/.zshrc` or `~/.bashrc`.
 
 After install:
-1. Edit `~/.workspace.conf` to set your desired project paths and Git identity.
-2. Reload your shell (`source ~/.zshrc` or `work-reload`) or restart your terminal.
+1. Edit `~/.workspace.conf` to set your desired project paths and Git identity (or use `work config edit`).
+2. Reload your shell (`source ~/.zshrc`, `source ~/.bashrc`, or run `work-reload`) or restart your terminal.
 
 ## Configuration
 Configuration is loaded from `~/.workspace.conf`. The core logic securely separates *where the tool lives* (`$WS_CORE_DIR`) from *where your work lives* (`$WS_PROJECTS`).
@@ -50,7 +51,7 @@ Variable reference:
 - `WS_CONDA_BASE`: Base directory where Conda environments are expected (`$WS_CONDA_BASE/envs/<project>`).
 - `WS_GIT_USER`: Per-project Git `user.name` applied during project creation/clone.
 - `WS_GIT_EMAIL`: Per-project Git `user.email` applied during project creation/clone.
-- `WS_SSH_KEY`: Optional SSH key path used for Git operations (`GIT_SSH_COMMAND` and local `core.sshCommand`).
+- `WS_SSH_KEY`: Optional SSH private key path for Git operations (`GIT_SSH_COMMAND` and local `core.sshCommand`).
 - `WS_CORE_DIR`: **(Auto-injected by installer)** The hidden path where the CLI binaries live. 
 
 ## Command Reference
@@ -59,7 +60,29 @@ The main command is:
 ```zsh
 work <subcommand> [options]
 ```
-*Note: Press `<Tab>` after typing `work start`, `stop`, `change`, or `delete` for dynamic, context-aware project name autocompletion.*
+*Note: Press `<Tab>` after typing `work start`, `stop`, `change`, `delete`, or `config` for dynamic, context-aware autocompletion.*
+
+### `work config`
+Routes to `bin/config.sh`.
+
+Usage examples:
+
+```zsh
+# View all configuration variables and their descriptions
+work config list
+
+# Programmatically update a specific variable
+work config set WS_GIT_EMAIL "your.email@example.com"
+
+# Open the configuration file in your default terminal editor
+work config edit
+```
+
+Behavior details:
+- `list`: Prints the current state of `~/.workspace.conf` with clean terminal formatting.
+- `set`: Safely updates the configuration file in-place using cross-platform POSIX utilities, avoiding GNU/BSD conflicts.
+- `edit`: Opens the config file using `$EDITOR` (falling back to `nano`).
+- Note: Configuration changes require running `work-reload` or restarting the terminal to apply to the active session.
 
 ### `work new`
 Routes to `bin/create_project.sh`.
@@ -86,7 +109,7 @@ work new --fork --publish my_project [https://github.com/OriginalDev/their-repo.
 Behavior details:
 - Creates project at `$WS_PROJECTS/<project_name>`.
 - If `conda` is available, clones `base` into a new environment named after the project.
-- Generates `.gitignore`, `.vscode/settings.json`, and project `README.md`.
+- Generates `.gitignore`, cross-platform `.vscode/settings.json`, and project `README.md`.
 - Applies local Git identity and SSH configuration using `WS_GIT_USER`, `WS_GIT_EMAIL`, `WS_SSH_KEY`.
 - **Fork Mode:** Renames the cloned remote to `upstream` and uses `gh` to provision your personal fork as `origin`.
 
@@ -118,7 +141,7 @@ Behavior details:
 - Prints a cleanly formatted list of directories found under `$WS_PROJECTS`.
 
 ### `work start`
-Intercepted by `workspace.plugin.zsh` and routed to `bin/start.zsh`.
+Intercepted by `workspace.plugin.*` and routed to `bin/start.sh`.
 
 Usage examples:
 
@@ -137,7 +160,7 @@ Behavior details:
 - Pulls from `origin` on the active branch and automatically checks for/merges updates from `upstream` (if a fork).
 
 ### `work stop`
-Intercepted by `workspace.plugin.zsh` and routed to `bin/stop.zsh`.
+Intercepted by `workspace.plugin.*` and routed to `bin/stop.sh`.
 
 Usage example:
 
@@ -152,7 +175,7 @@ Behavior details:
 - Deactivates Conda shells, unsets session variables, and returns to the home directory.
 
 ### `work change`
-Intercepted by `workspace.plugin.zsh`.
+Intercepted by `workspace.plugin.*`.
 
 Usage example:
 
@@ -176,4 +199,4 @@ Behavior details:
 - Acts as a global safety net, scanning all projects in `$WS_PROJECTS` and performing a batch sync/push operation for any dirty repositories left open in other terminals.
 
 ## Developer Tools
-- `work-reload`: A hidden alias that hot-reloads `workspace.plugin.zsh` and rebuilds the Zsh `compdef` autocomplete index without restarting the terminal session.
+- `work-reload`: A hidden alias that hot-reloads the active shell plugin and rebuilds the autocomplete index without restarting the terminal session.
