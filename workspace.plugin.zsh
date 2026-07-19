@@ -21,19 +21,19 @@ work() {
     
     case "$cmd" in
         start)
-            source "$$WS_CORE_DIR/bin/start.zsh" "$@"
+            source "$WS_CORE_DIR/bin/start.zsh" "$@"
             ;;
         stop)
-            source "$$WS_CORE_DIR/bin/stop.zsh" "$@"
+            source "$WS_CORE_DIR/bin/stop.zsh" "$@"
             ;;
         change)
             echo "=== Transitioning Workspace Topology ==="
-            source "$$WS_CORE_DIR/bin/stop.zsh"
-            source "$$WS_CORE_DIR/bin/start.zsh" "$@"
+            source "$WS_CORE_DIR/bin/stop.zsh"
+            source "$WS_CORE_DIR/bin/start.zsh" "$@"
             ;;
         *)
             # Pass all other commands (new, delete, list, etc.) to the isolated binary router
-            "$$WS_CORE_DIR/bin/work" "$cmd" "$@"
+            "$WS_CORE_DIR/bin/work" "$cmd" "$@"
             ;;
     esac
 }
