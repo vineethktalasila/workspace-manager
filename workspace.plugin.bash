@@ -43,7 +43,7 @@ _work_bash_autocomplete() {
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
     
-    subcommands="start stop change delete new list backup"
+    subcommands="start stop change delete new list backup config"
 
     # If completing the first word (the subcommand)
     if [[ ${COMP_CWORD} -eq 1 ]]; then

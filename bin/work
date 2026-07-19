@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/usr/bin/env zsh
 # ==============================================================================
 # Workspace Manager Core CLI Router
 # ==============================================================================
@@ -21,6 +21,9 @@ case "$SUBCOMMAND" in
         ;;
     delete)
         exec "$WS_CORE_DIR/bin/delete_project.sh" "$@"
+        ;;
+    config)
+        exec "$WS_CORE_DIR/bin/config.sh" "$@"
         ;;
     list)
         echo "=== Available Projects ==="

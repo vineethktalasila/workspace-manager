@@ -48,6 +48,7 @@ _work() {
         'delete:Delete a workspace project'
         'new:Create a new workspace project'
         'list:List available workspace projects'
+        'config:Manage workspace configuration settings'
     )
 
     # First positional argument: the subcommand itself
