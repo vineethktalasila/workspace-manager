@@ -2,11 +2,8 @@
 # ------------------------------------------------------------------------------
 # Script: create_project.sh
 # Description:
-#   Creates a managed workspace project by either scaffolding a new repository
-#   or cloning an existing remote repository, then applying local Git identity
-#   and optional SSH routing. For scaffolded projects, it can provision a Conda
-#   environment, generate project structure/files, and optionally publish to
-#   GitHub via gh CLI.
+#   Creates a managed workspace project by either scaffolding a new repository,
+#   cloning an existing one, or forking an upstream repository.
 #
 # Global Variables Required:
 #   WS_PROJECTS   - Base directory where project folders are created.
@@ -19,19 +16,14 @@
 #   Positional/flags parsed by this script:
 #     work new [--flat] [--publish] [--public] <project_name> [remote_url]
 #     work new --clone <project_name> <remote_url>
-#
-# Side Effects:
-#   - Creates directories/files under $WS_PROJECTS/<project_name>.
-#   - Initializes and commits a Git repository.
-#   - Writes local Git config (user identity and core.sshCommand).
-#   - Creates Conda environment <project_name> by cloning base (if conda exists).
-#   - Calls GitHub API through gh CLI to create/push remote repos (optional).
+#     work new --fork [--publish] [--public] <project_name> <upstream_url>
 # ------------------------------------------------------------------------------
 set -eo pipefail # Fail fast on errors
 
 FLAT_MODE=0
 PUBLISH_MODE=0
 CLONE_MODE=0
+FORK_MODE=0
 VISIBILITY="--private"
 PROJECT_NAME=""
 REMOTE_URL=""
@@ -40,6 +32,7 @@ REMOTE_URL=""
 while [[ $# -gt 0 ]]; do
     case $1 in
         --clone)   CLONE_MODE=1; REMOTE_URL="$2"; shift 2 ;;
+        --fork)    FORK_MODE=1; REMOTE_URL="$2"; shift 2 ;;
         --flat)    FLAT_MODE=1; shift ;;
         --publish) PUBLISH_MODE=1; shift ;;
         --public)  VISIBILITY="--public"; shift ;;
@@ -50,7 +43,7 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-if [ -z "$PROJECT_NAME" ] && [ "$CLONE_MODE" -eq 0 ]; then
+if [ -z "$PROJECT_NAME" ] && [ "$CLONE_MODE" -eq 0 ] && [ "$FORK_MODE" -eq 0 ]; then
     echo "Fatal: Project name required." >&2; exit 1
 fi
 
@@ -91,7 +84,36 @@ if [ "$CLONE_MODE" -eq 1 ]; then
 fi
 
 # ------------------------------------------------------------------------------
-# Branch B: Standard Scaffolding
+# Branch B: Fork Architecture
+# ------------------------------------------------------------------------------
+if [ "$FORK_MODE" -eq 1 ]; then
+    if [ -z "$REMOTE_URL" ]; then echo "Fatal: Upstream URL required for forking." >&2; exit 1; fi
+    echo "=== Forking Upstream Repository: $PROJECT_NAME ==="
+    
+    # 1. Clone the original developer's repo
+    git clone "$REMOTE_URL" "$PROJECT_PATH"
+    configure_local_git "$PROJECT_PATH"
+    
+    # 2. Rename their remote from 'origin' to 'upstream'
+    git -C "$PROJECT_PATH" remote rename origin upstream
+    
+    # 3. Provision your own 'origin' if publish is requested
+    if [ "$PUBLISH_MODE" -eq 1 ] && command -v gh &> /dev/null; then
+        echo "Provisioning personal remote repository via GitHub API ($VISIBILITY)..."
+        cd "$PROJECT_PATH"
+        gh repo create "$PROJECT_NAME" $VISIBILITY --source="." --remote=origin
+        git push -u origin HEAD
+    else
+        echo "Notice: Repository cloned and upstream set, but no personal origin created."
+        echo "Tip: Run with --publish to automatically create your GitHub fork."
+    fi
+    
+    echo "=== Fork Complete ==="
+    exit 0
+fi
+
+# ------------------------------------------------------------------------------
+# Branch C: Standard Scaffolding
 # ------------------------------------------------------------------------------
 echo "=== Initializing Workspace: $PROJECT_NAME ==="
 mkdir -p "$PROJECT_PATH"

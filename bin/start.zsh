@@ -58,6 +58,10 @@ if command -v conda &> /dev/null; then
 fi
 
 cd "$WS_PROJECTS/$SELECTED_ENV" || return 1
+
+# ---> NEW LINE GOES HERE <---
+export WS_ACTIVE_PROJECT="$SELECTED_ENV"
+
 echo "-> Activated ($SELECTED_ENV) at $(pwd)"
 echo "=================================="
 
