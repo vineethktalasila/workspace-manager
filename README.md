@@ -19,7 +19,7 @@ The CLI routing behavior is decoupled across:
 ## Installation
 
 ```zsh
-curl -fsSL [https://raw.githubusercontent.com/vineethktalasila/workspace-manager/main/install.sh](https://raw.githubusercontent.com/vineethktalasila/workspace-manager/main/install.sh) | zsh
+curl -fsSL https://raw.githubusercontent.com/vineethktalasila/workspace-manager/main/install.sh | zsh
 ```
 
 What `install.sh` does:
