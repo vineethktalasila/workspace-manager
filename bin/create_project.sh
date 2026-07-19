@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/usr/bin/env zsh
 # ------------------------------------------------------------------------------
 # Script: create_project.sh
 # Description:
@@ -168,17 +168,20 @@ mkdir -p "$PROJECT_PATH/.vscode"
 cat << EOF > "$PROJECT_PATH/.vscode/settings.json"
 {
     "python.defaultInterpreterPath": "$WS_CONDA_BASE/envs/$PROJECT_NAME/bin/python",
-    "terminal.integrated.env.osx": {
-        "PATH": "$WS_CONDA_BASE/bin:\${env:PATH}"
-    },
     "python.terminal.activateEnvironment": false,
+    
+    "terminal.integrated.env.osx": { "PATH": "$WS_CONDA_BASE/bin:\${env:PATH}" },
+    "terminal.integrated.env.linux": { "PATH": "$WS_CONDA_BASE/bin:\${env:PATH}" },
+    
     "terminal.integrated.profiles.osx": {
-        "zsh (Conda)": {
-            "path": "zsh",
-            "args": ["-c", "eval \\\"\\$(conda shell.zsh hook)\\\"; conda activate $PROJECT_NAME; exec zsh"]
-        }
+        "zsh (Conda)": { "path": "zsh", "args": ["-c", "eval \\\"\\$(conda shell.zsh hook)\\\"; conda activate $PROJECT_NAME; exec zsh"] }
     },
-    "terminal.integrated.defaultProfile.osx": "zsh (Conda)"
+    "terminal.integrated.profiles.linux": {
+        "zsh (Conda)": { "path": "zsh", "args": ["-c", "eval \\\"\\$(conda shell.zsh hook)\\\"; conda activate $PROJECT_NAME; exec zsh"] }
+    },
+    
+    "terminal.integrated.defaultProfile.osx": "zsh (Conda)",
+    "terminal.integrated.defaultProfile.linux": "zsh (Conda)"
 }
 EOF
 

@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/usr/bin/env zsh
 # ------------------------------------------------------------------------------
 # Script: delete_project.sh
 # Description:

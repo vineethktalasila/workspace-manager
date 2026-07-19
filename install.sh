@@ -1,19 +1,24 @@
-#!/bin/zsh
+#!/usr/bin/env zsh
 # ==============================================================================
-# Workspace Manager - Automated Installer
+# Workspace Manager - Automated Dual-Shell Installer
 # ==============================================================================
 set -e
 
 REPO_URL="https://github.com/vineethktalasila/workspace-manager.git"
 INSTALL_DIR="$HOME/.workspace-manager" # Hidden directory for end-users
 CONFIG_FILE="$HOME/.workspace.conf"
-ZSHRC="$HOME/.zshrc"
 
 echo "=== Installing Workspace Manager ==="
 
 # 1. Dependency Checks
 if ! command -v git &> /dev/null; then
     echo "Error: git is required to install Workspace Manager."
+    exit 1
+fi
+
+if ! command -v zsh &> /dev/null; then
+    echo "Error: zsh must be installed on the system (even if it is not your default shell)."
+    echo "Please install zsh (e.g., 'sudo apt install zsh') and try again."
     exit 1
 fi
 
@@ -44,21 +49,37 @@ else
     echo "-> IMPORTANT: Please review and update ~/.workspace.conf with your personal details."
 fi
 
-# 4. Inject Zsh Bindings
-INJECTION_STRING="source $INSTALL_DIR/workspace.plugin.zsh"
+# 4. Detect Shell and Inject Bindings
+USER_SHELL=$(basename "$SHELL")
 
-if grep -qF "$INJECTION_STRING" "$ZSHRC"; then
-    echo "-> Zsh bindings already present in ~/.zshrc."
+if [ "$USER_SHELL" = "zsh" ]; then
+    RC_FILE="$HOME/.zshrc"
+    PLUGIN_FILE="workspace.plugin.zsh"
+    echo "-> Zsh environment detected."
+elif [ "$USER_SHELL" = "bash" ]; then
+    RC_FILE="$HOME/.bashrc"
+    PLUGIN_FILE="workspace.plugin.bash"
+    echo "-> Bash environment detected."
 else
-    echo "-> Injecting Zsh bindings into ~/.zshrc..."
-    echo "\n# Workspace Manager" >> "$ZSHRC"
-    echo "$INJECTION_STRING" >> "$ZSHRC"
+    echo "-> Warning: Unsupported shell ($USER_SHELL). Defaulting to Bash bindings."
+    RC_FILE="$HOME/.bashrc"
+    PLUGIN_FILE="workspace.plugin.bash"
+fi
+
+INJECTION_STRING="source $INSTALL_DIR/$PLUGIN_FILE"
+
+if grep -qF "$INJECTION_STRING" "$RC_FILE"; then
+    echo "-> Shell bindings already present in $RC_FILE."
+else
+    echo "-> Injecting shell bindings into $RC_FILE..."
+    echo "\n# Workspace Manager" >> "$RC_FILE"
+    echo "$INJECTION_STRING" >> "$RC_FILE"
 fi
 
 echo "======================================================"
 echo " Installation Complete!"
 echo "======================================================"
 echo "To finish setup:"
-echo "  1. Edit ~/.workspace.conf with your Git and SSD paths."
-echo "  2. Restart your terminal or run: source ~/.zshrc"
+echo "  1. Edit ~/.workspace.conf with your desired paths."
+echo "  2. Restart your terminal or run: source $RC_FILE"
 echo "  3. Type 'work list' to verify the installation."

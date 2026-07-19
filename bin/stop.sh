@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/usr/bin/env zsh
 # ==============================================================================
 # Script: stop.zsh
 # Description: Teardown and sync for the CURRENTLY ACTIVE workspace project.
