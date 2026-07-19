@@ -17,10 +17,10 @@ shift # Shift arguments so $1 becomes the first option after the subcommand
 # 2. Route Subcommands
 case "$SUBCOMMAND" in
     new)
-        exec "$WS_PROJECTS/workspace-manager/bin/create_project.sh" "$@"
+        exec "$WS_CORE_DIR/bin/create_project.sh" "$@"
         ;;
     delete)
-        exec "$WS_PROJECTS/workspace-manager/bin/delete_project.sh" "$@"
+        exec "$WS_CORE_DIR/bin/delete_project.sh" "$@"
         ;;
     list)
         echo "=== Available Projects ==="

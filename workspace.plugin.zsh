@@ -7,6 +7,13 @@ if [[ -f "$HOME/.workspace.conf" ]]; then
     source "$HOME/.workspace.conf"
 fi
 
+# A hidden command to hot-reload the workspace manager without restarting the terminal
+alias work-reload='source ~/work/projects/workspace-manager/workspace.plugin.zsh && \
+                   unfunction _work 2>/dev/null; \
+                   autoload -Uz compinit && compinit && \
+                   echo "Workspace Manager hot-reloaded successfully."'
+# -----------------------
+
 # The main shell function interceptor
 work() {
     local cmd=$1
@@ -14,19 +21,19 @@ work() {
     
     case "$cmd" in
         start)
-            source "$WS_PROJECTS/workspace-manager/bin/start.zsh" "$@"
+            source "$$WS_CORE_DIR/bin/start.zsh" "$@"
             ;;
         stop)
-            source "$WS_PROJECTS/workspace-manager/bin/stop.zsh" "$@"
+            source "$$WS_CORE_DIR/bin/stop.zsh" "$@"
             ;;
         change)
             echo "=== Transitioning Workspace Topology ==="
-            source "$WS_PROJECTS/workspace-manager/bin/stop.zsh"
-            source "$WS_PROJECTS/workspace-manager/bin/start.zsh" "$@"
+            source "$$WS_CORE_DIR/bin/stop.zsh"
+            source "$$WS_CORE_DIR/bin/start.zsh" "$@"
             ;;
         *)
             # Pass all other commands (new, delete, list, etc.) to the isolated binary router
-            "$WS_PROJECTS/workspace-manager/bin/work" "$cmd" "$@"
+            "$$WS_CORE_DIR/bin/work" "$cmd" "$@"
             ;;
     esac
 }
